@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.EditText
 import android.widget.SearchView
 import android.widget.Toast
+import androidx.core.view.isGone
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -113,11 +114,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         showTovarBinding.textViewBuy.setOnClickListener(this)
         showTovarBinding.textViewAddTovar.setOnClickListener(this)
         showTovarBinding.textViewSubstractTovar.setOnClickListener(this)
-        activityMainBinding.topNavigationView.setOnNavigationItemSelectedListener(this)
-        activityMainBinding.bottomNavigationView.setOnNavigationItemSelectedListener(this)
-        activityMainBinding.searchView.setOnQueryTextListener(this)
+        activityMainBinding.includeTop.topNavigationView.setOnNavigationItemSelectedListener(this)
+        activityMainBinding.includeTop.topNavigationView.setOnNavigationItemSelectedListener(this)
+        activityMainBinding.includeBottom.bottomNavigationView.setOnNavigationItemSelectedListener(this)
+        activityMainBinding.includeBottom.searchView.setOnQueryTextListener(this)
 
-        activityMainBinding.topNavigationView.selectedItemId=R.id.topMenuItemCatalog
+        activityMainBinding.includeTop.topNavigationView.selectedItemId=R.id.topMenuItemCatalog
 
 
     }
@@ -200,10 +202,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
             R.id.topMenuItemProfile->{}
             R.id.bottomMenuFiltre->{}
             R.id.bottomMenuSearch->{
-                activityMainBinding.searchView.visibility = if (activityMainBinding.searchView.visibility==View.INVISIBLE)
-                    View.VISIBLE
+                activityMainBinding.includeBottom.searchView.isGone=if (activityMainBinding.includeBottom.searchView.visibility==View.GONE)
+                    false
                 else
-                    View.INVISIBLE
+                    true
             }
         }
         return true

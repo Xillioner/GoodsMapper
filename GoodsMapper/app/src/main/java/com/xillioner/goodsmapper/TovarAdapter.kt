@@ -12,7 +12,9 @@ class TovarAdapter(
 ) : RecyclerView.Adapter<TovarAdapter.ListTovarCardViewHolder>() {
 
     inner class ListTovarCardViewHolder(listTovarCardviewBinding: ListTovarCarditemBinding) :
-        RecyclerView.ViewHolder(listTovarCardviewBinding.root.rootView), View.OnClickListener {
+        RecyclerView.ViewHolder(listTovarCardviewBinding.root.rootView),
+        View.OnClickListener
+    {
 
         internal var tovarName = listTovarCardviewBinding.textViewTovarName
         internal var image = listTovarCardviewBinding.imageView
