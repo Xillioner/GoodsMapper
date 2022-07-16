@@ -1,5 +1,7 @@
 package com.xillioner.goodsmapper
 
+import android.content.Context
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -15,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.xillioner.goodsmapper.databinding.ActivityMainBinding
 import com.xillioner.goodsmapper.databinding.ShowTovarBinding
-import java.lang.Exception
+import kotlin.Exception
 
 class MainActivity : AppCompatActivity(), View.OnClickListener,
     BottomNavigationView.OnNavigationItemSelectedListener,SearchView.OnQueryTextListener {
@@ -23,6 +25,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
     private lateinit var showTovarBinding: ShowTovarBinding
 
     private var tovarList = ArrayList<Tovar>()
+    private var shoppingCartList=ArrayList<Tovar>()
 
     private var recyclerView: RecyclerView? = null
     private var adapter: TovarAdapter? = null
@@ -34,18 +37,64 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
     private var showTovarFlag = false
     private var mainActivityFlag = false
 
+
     //Свойство расширяет editText
     private val EditText.intValue: Int
         get() = text.toString().toInt()
 
     override fun onPause() {
         super.onPause()
+        val jsonConverter=JSONConverter()
+        val jsonString= jsonConverter.convertToString(shoppingCartList)
+        val prefs=getSharedPreferences("Goods Mapper",Context.MODE_PRIVATE)
+        if(!prefs.getString("Activity","Exit").equals("Exit")) {
+            val editor = prefs.edit()
+            editor.putString("cart tovar list", jsonString)
+            editor.apply()
+        }
         if (!showTovarFlag)
             showTovarFlag = true
     }
 
+    override fun onStart() {
+        super.onStart()
+        val prefs=getSharedPreferences("Goods Mapper", Context.MODE_PRIVATE)
+        var editor=prefs.edit()
+        editor.putString("Activity","MainActivity")
+        editor.apply()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val prefs=getSharedPreferences("Goods Mapper", Context.MODE_PRIVATE)
+        if(prefs.getString("Activity","Exit").equals("Exit")) {
+            var editor = prefs.edit()
+            editor.clear()
+            editor.apply()
+        }
+    }
+
+
+
     override fun onResume() {
         super.onResume()
+
+
+                    val prefs=getSharedPreferences("Goods Mapper", Context.MODE_PRIVATE)
+
+
+        var jsonString =prefs.getString("cart tovar list","jsonString")
+
+        var exception:Exception
+        try{
+            var jsonConverter = JSONConverter()
+            shoppingCartList = jsonConverter.convertToTovar(jsonString!!)
+        }catch (ex:Exception){
+            Log.i("info", "MainActivity->onResume Не найден json")
+        }
+
+
+
         Log.i("info", "onResume")
         if (showTovarFlag) {
             showTovar(tovarId)
@@ -54,6 +103,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     override fun onBackPressed() {
+        val prefs=getSharedPreferences("Goods Mapper", Context.MODE_PRIVATE)
+        var editor=prefs.edit()
+        editor.putString("Activity","Exit")
+        editor.apply()
         if (showTovarFlag) {
             mainActivityFlag = true
             showTovarFlag = false
@@ -70,29 +123,32 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         mainActivityFlag = true
         Log.i("info", "OnCreate")
         activityMainBinding = ActivityMainBinding.inflate(layoutInflater)
         recyclerView = activityMainBinding.recyclerViewCatalog
 
-
         setContentView(activityMainBinding.root)
 
         val tovarItem = Tovar()
         tovarItem.name = "Велосипед 1"
+        tovarItem.image="default"
         tovarItem.description = "Трёх-колёсный"
-        tovarItem.price = "1000"
+        tovarItem.price = 1000.00
         tovarItem.buyStatus = "КУПЛЮ СЕЙЧАС"
 
         val tovarItem1 = Tovar()
         tovarItem1.name = "Велосипед 2"
+        tovarItem1.image="default"
         tovarItem1.description = "Трёх-колёсный"
-        tovarItem1.price = "5000"
+        tovarItem1.price = 5000.00
         tovarItem1.buyStatus = "КУПЛЮ СЕЙЧАС"
 
         val tovarItem2=Tovar()
         tovarItem2.name="Bike_red"
-        tovarItem2.price="10000"
+        tovarItem2.image="default"
+        tovarItem2.price=10000.00
         tovarItem2.description="Красный двухколёсный"
         tovarItem2.buyStatus="Куплю сейчас"
 
@@ -129,23 +185,68 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     fun addToCart(adapterPosition: Int, showDialog: Boolean) {
+        var tovar=tovarList[adapterPosition]
         when (showDialog) {
             true -> {
                 Log.i("info", "Добавить товар $adapterPosition в корзину?")
+                //Если список не пустой
+                if(shoppingCartList.size>0){
+                    for ((index,item) in shoppingCartList.withIndex()){
+                        //если товар есть в списке
+                        if (item.name.equals(tovar.name)){
+                            item.amount=item.amount+1
+                            shoppingCartList.remove(tovar)
+                            shoppingCartList.add(item)
+                            continue
+                        }
+                        //Добавляю товар которого нет в списке
+                        if (index==shoppingCartList.size-1) {
+                            tovar.amount = tovar.amount + 1
+                            shoppingCartList.add(tovar)
+                        }
+                    }
+                }
+                else{
+                    tovar.amount=tovar.amount+1
+                    shoppingCartList.add(tovar)
+                }
             }
             false -> {
-                Toast.makeText(
-                    this,
-                    "Товар был добавлен в корзину, в количестве $currentAmmountTovar шт.",
-                    Toast.LENGTH_SHORT
-                ).show()
-                Log.i(
-                    "info",
-                    "Товар $adapterPosition добавлен в корзину, в количестве $currentAmmountTovar."
-                )
+                Toast.makeText(this,"Товар был добавлен в корзину, в количестве $currentAmmountTovar шт.",Toast.LENGTH_SHORT).show()
+                Log.i("info","Товар $adapterPosition добавлен в корзину, в количестве $currentAmmountTovar.")
+                //tovar.amount=+currentAmmountTovar
+
+                if(shoppingCartList.size>0){
+                    for ((index,item)in shoppingCartList.withIndex()){
+                        if(item.name.equals(tovar.name)){
+                            item.amount=item.amount+currentAmmountTovar
+                            shoppingCartList.remove(tovar)
+                            shoppingCartList.remove(tovar)
+                            shoppingCartList.add(item)
+                            continue
+                        }
+                        if(index==shoppingCartList.size-1){
+                            tovar.amount=tovar.amount+currentAmmountTovar
+                            shoppingCartList.add(tovar)
+                        }
+                    }
+                }else{
+                    tovar.amount=tovar.amount+currentAmmountTovar
+                    shoppingCartList.add(tovar)
+                }
+
                 onBackPressed()
             }
         }
+
+
+//        if(!(toCartTovarList[adapterPosition].name).equals(tovar.name,true)) {
+//            toCartTovarList.add(tovarList[adapterPosition])
+//        }
+//        else {
+//            var index = toCartTovarList.indexOf(tovar)
+//            toCartTovarList.set(index,tovar)
+//        }
     }
 
     fun showTovar(adapterPosition: Int) {
@@ -155,7 +256,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         showTovarBinding.textViewName.text = tovarList[adapterPosition].name
         showTovarBinding.textViewDescription.text = tovarList[adapterPosition].description
         showTovarBinding.textViewShowPrice.text =
-            tovarList[adapterPosition].price +
+            tovarList[adapterPosition].price.toString() +
                     showTovarBinding.root.resources.getString(R.string.fa_solid_ruble_sign)
         changeAmmountTovar()
         val viewShowTovar = showTovarBinding.root
@@ -200,6 +301,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
             R.id.topMenuItemHome->{}
             R.id.topMenuItemCatalog->{}
             R.id.topMenuItemProfile->{}
+            R.id.topMenuShoppingCart->{
+                val intent=Intent(this,ShoppingCartActivity::class.java)
+                startActivity(intent)
+            }
             R.id.bottomMenuFiltre->{}
             R.id.bottomMenuSearch->{
                 activityMainBinding.includeBottom.searchView.isGone=if (activityMainBinding.includeBottom.searchView.visibility==View.GONE)

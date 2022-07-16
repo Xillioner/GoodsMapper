@@ -43,14 +43,14 @@ class TovarAdapter(
         }
     }
 
-    public fun setFilteredList(searchedList: ArrayList<Tovar>){
+    fun setFilteredList(searchedList: ArrayList<Tovar>){
         this.tovarList=searchedList
         notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListTovarCardViewHolder {
-        val itemBinding =
-            ListTovarCarditemBinding.inflate(LayoutInflater.from(mainActivity), parent, false)
+        val itemBinding = ListTovarCarditemBinding.
+        inflate(LayoutInflater.from(mainActivity), parent, false)
         return ListTovarCardViewHolder(itemBinding)
     }
 
